@@ -33,10 +33,14 @@ matcher.set_distance_metrics(['discounted_levenshtein','SSK', 'fuzzy_wuzzy_token
 matcher.load_and_process_master_data('normalized_advertiser_name', advertisers_data)
 matched_data = matcher.match_names(to_be_matched=lenders_data, column_matching='normalized_lender_name')
 matched_data = matched_data[matched_data['score']>=80]
+matched_data = matched_data.drop_duplicates(subset='original_name')
 
-combined = pd.merge(advertisers_data, matched_data, how='left', left_index=True, right_on='match_index')
-combined = pd.merge(combined, lenders_data, how='left', left_index=True, right_index=True)
+combined = pd.merge(advertisers_data, matched_data, how='outer', left_index=True, right_on='match_index')
+combined = pd.merge(combined, lenders_data, how='outer', left_index=True, right_index=True)
+
 combined.drop(columns=['year_x', 'normalized_advertiser_name', 'original_name', 'match_name', 'year_y', 'normalized_lender_name'], inplace=True)
+combined.reset_index(drop=True, inplace=True)
+combined = combined[['lender_name', 'lender_id', 'advertiser_name', 'advertiser_id', 'match_index', 'score']]
 combined.to_csv("combined_data.csv")
 
 
