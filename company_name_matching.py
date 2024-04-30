@@ -2,6 +2,10 @@ import string
 import pandas as pd
 from name_matching.name_matcher import NameMatcher
 
+file1 = "./data/lenders (1).csv"
+file2 = "./data/advertisers (1).csv"
+output = "adv_lender_data.csv"
+
 words_to_remove = [
     'llc', 'inc', 'co', 'corp', 'company', 'bank', 'limited', 'ltd', 'group', 'holdings', 'partners', 'associates', 
     'services', 'enterprises', 'international', 'int', 'plc', 'na', 'the', 'n a', 'bancorp', 
@@ -19,7 +23,7 @@ def normalize(names):
     return names
 
 print("Reading lenders data")
-lenders_data = pd.read_csv("./data/lenders (1).csv")
+lenders_data = pd.read_csv(file1)
 print("Normalizing lenders name")
 lenders_data['normalized_lender_name'] = normalize(lenders_data['respondentname'])
 print("Droping duplicates lenders name")
@@ -27,7 +31,7 @@ lenders_data = lenders_data.drop_duplicates(subset='normalized_lender_name')
 
 
 print("Reading advertisers data")
-advertisers_data = pd.read_csv("./data/advertisers (1).csv")
+advertisers_data = pd.read_csv(file2)
 print("Normalizing advertisers name")
 advertisers_data['normalized_advertiser_name'] = normalize(advertisers_data['advertiser_name'])
 print("Droping duplicate advertisers name")
@@ -50,4 +54,4 @@ print("Droping extra columns")
 combined = combined[['respondentname', 'hmda_id', 'advertiser_name', 'advertiser_id', 'score']]
 
 print("Saving merged data into CSV file")
-combined.to_csv("adv_lender_data.csv")
+combined.to_csv(output)
