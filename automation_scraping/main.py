@@ -32,15 +32,24 @@ class AirtableManager:
 
     def get_url_list(self):
         airtable = Airtable(self.airtable_base_id, self.airtable_product, api_key=self.airtable_api_key)
-        result = airtable.get_all()
+        result = airtable.get_all(formula="NOT({Status})")
         url_list = [{'id': record['id'], 'url': record['fields'].get('Source URL')} for record in result if 'Source URL' in record['fields']]
+       
         return url_list
 
+
     def update_status(self, record_id, status):
-        airtable = Airtable(self.airtable_base_id, self.airtable_product, api_key=self.airtable_api_key)
-        update_result = airtable.update(record_id, {'Status': status})
-        log(f"Updated record {record_id} with status: {status}")
-        return update_result
+        try:
+            airtable = Airtable(self.airtable_base_id, self.airtable_product, api_key=self.airtable_api_key)
+           
+            if record_id and status:
+                update_result = airtable.update(record_id, {'Status': status})
+                log(f"Updated record {record_id} with status: {status}")
+                return update_result
+            else:
+                log(f"Record id or status not found")
+        except Exception as e:
+            log(f"Error in update in airtable:{e}")
 
 def main():
     manager = AirtableManager()
@@ -56,9 +65,16 @@ def main():
                 stock_status = soup.find(id="ctl00_contentBody_lblStockStatus")
                 if stock_status:
                     status_text = stock_status.get_text().strip()
-                    log(f"Status of Stock:{status_text}")
-                    manager.update_status(record_id, status_text)
-                    log(f"Record update successfully for Url:{url}")
+                    if status_text:
+                        log(f"Status of Stock:{status_text}")
+                        manager.update_status(record_id, status_text)
+                        log(f"Record update successfully for Url:{url}")
+                    else:
+                        stock_status1 = soup.find(id="ctl00_contentBody_pnlDiscontinued")
+                        status_text1 = stock_status1.get_text().strip()
+                        log(f"Status of Stock:{status_text1}")
+                        manager.update_status(record_id, status_text1)
+                        log(f"Record update successfully for Url:{url}")
                 else:
                     log(f"Element with id 'ctl00_contentBody_lblStockStatus' not found.{url}")
             else:
