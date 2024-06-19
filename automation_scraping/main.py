@@ -43,7 +43,7 @@ class AirtableManager:
             airtable = Airtable(self.airtable_base_id, self.airtable_product, api_key=self.airtable_api_key)
             all_url_list = []
             views=["viwEoQqCqAV7GtUlM","viwOEZRrMox33wBBS","viwsfe0mW93UAEELH"]
-        
+            # views=["viwsfe0mW93UAEELH"]
             for view_id in  views:            
                 result = airtable.get_all(view=view_id)  # Use view_id directly
                 url_list = [{'id': record['id'], 'url': record['fields'].get('Source URL')} for record in result if 'Source URL' in record['fields']]
@@ -79,14 +79,14 @@ def view1(url,record_id):
                 status_text = stock_status.get_text().strip()
                 if status_text:
                     log(f"Status of Stock:{status_text}")
-                    manager.update_status(record_id, status_text,"CASIberia Stock Status")
-                    log(f"Record update successfully for Url:{url}")
+                    return manager.update_status(record_id, status_text,"CASIberia Stock Status")
+                  
                 else:
                     stock_status1 = soup.find(id="ctl00_contentBody_pnlDiscontinued")
                     status_text1 = stock_status1.get_text().strip()
                     log(f"Status of Stock:{status_text1}")
-                    manager.update_status(record_id, status_text1,"CASIberia Stock Status")
-                    log(f"Record update successfully for Url:{url}")
+                    return manager.update_status(record_id, status_text1,"CASIberia Stock Status")
+                    
             else:
                 log(f"Element with id 'ctl00_contentBody_lblStockStatus' not found.{url}")
         else:
@@ -102,24 +102,37 @@ def view2(url,record_id):
         response=requests.get(url)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-            # Extract the text of the element with the specific id
+            stock_closeout=soup.find("p", class_="closeout")           
+            if stock_closeout:
+                stock_closeout_text=stock_closeout.get_text().strip()
+                return manager.update_status(record_id, stock_closeout_text,"Windlass Stock Status")
+            
+            stock_soldout=soup.find("div", class_="out-stockWarp")
+           
+            if stock_soldout:
+             
+                stock_soldout_text=stock_soldout.text
+               
+                return manager.update_status(record_id, stock_soldout_text,"Windlass Stock Status")
+            
             stock_status = soup.find(id="form-action-addToCart")
             if stock_status:
                 status_text = stock_status.text
                 if status_text == "Add to Cart":
                     log(f"Status of Stock:{status_text}")
-                    manager.update_status(record_id, "In Stock!","Windlass Stock Status")
-                    log(f"Record update successfully for Url:{url}")
+                    return manager.update_status(record_id, "in Stock","Windlass Stock Status")
+                    # log(f"Record update successfully for Url:{url}")
                 else:
                     
                     stock_status_element = soup.find(id="form-action-addToCart") 
                     stock_status_text=stock_status_element.get_text()
                     if stock_status_text=="Pre-Order Now":
-                        manager.update_status(record_id, "This product is on BackOrder and will be shipped later","Windlass Stock Status")
-                        log(f"Record update successfully for Url:{url}")
+                        
+                        return manager.update_status(record_id, "This product is on BackOrder and will be shipped later","Windlass Stock Status")
+                        # log(f"Record update successfully for Url:{url}")
                     else:
-                        manager.update_status(record_id, "Out of stock","Windlass Stock Status")
-                        log(f"Record update successfully for Url:{url}")
+                        return manager.update_status(record_id, "Out of stock","Windlass Stock Status")
+                        # log(f"Record update successfully for Url:{url}")
 
 
     except Exception as e:
@@ -127,34 +140,38 @@ def view2(url,record_id):
 
 def view3(url,record_id):
     try:
+      
         manager=AirtableManager()
         chrome_options = Options()
         chrome_options.add_argument("--headless")  # Run in headless mode (optional)
-        service = ChromeService(executable_path=ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+        # service = ChromeService(executable_path=ChromeDriverManager().install())
+        driver = webdriver.Chrome( options=chrome_options)
         driver.get(url)
     
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
-        stock_status_element = soup.find('div', class_='bo-inventory-description')
-        if stock_status_element:
-            stock_status = stock_status_element.get_text()         
-            manager.update_status(record_id, stock_status,"Windlass Stock Status")
-        else:
-            stock_status = soup.find(id="form-action-addToCart")
-            if stock_status:
-                status_text = stock_status.get("value")        
-                if status_text == "Add to Cart":
-                    log(f"Status of Stock:{status_text}")
-                    manager.update_status(record_id, "In Stock Now!","Windlass Stock Status")
-                    log(f"Record update successfully for Url:{url}")
-                elif  status_text=="Pre-Purchase":
-                    log(f"Status of Stock:{status_text}")
-                    manager.update_status(record_id, "Not in Stock. Pre-Purchase Available.","Windlass Stock Status")
-                    log(f"Record update successfully for Url:{url}")
+        stock_out=soup.find(id="add-to-cart-wrapper")
+        if stock_out and 'display: none' in stock_out.get('style', ''):   
+                
+            return manager.update_status(record_id, "Out of Stock","Windlass Stock Status")
 
-                else:
-                    manager.update_status(record_id, "Out of Stock","Windlass Stock Status")
+        stock_status_element = soup.find('div', class_='bo-inventory-description')
+        if stock_status_element:          
+            stock_status = stock_status_element.get_text()         
+            return manager.update_status(record_id, stock_status,"Windlass Stock Status")
+    
+        stock_status = soup.find(id="form-action-addToCart")
+        if stock_status:
+           
+            status_text = stock_status.get("value")        
+            if status_text == "Add to Cart":
+                log(f"Status of Stock:{status_text}")
+                return manager.update_status(record_id, "In Stock Now!","Windlass Stock Status")                
+            elif  status_text=="Pre-Purchase":
+                log(f"Status of Stock:{status_text}")
+                return manager.update_status(record_id, "Not in Stock. Pre-Purchase Available.","Windlass Stock Status")
+            else:
+                return manager.update_status(record_id, "Out of Stock","Windlass Stock Status")
     except Exception as e:
         log(f"Error in view3 as{e}")
 
