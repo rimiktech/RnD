@@ -79,12 +79,14 @@ def view1(url,record_id):
                 status_text = stock_status.get_text().strip()
                 if status_text:
                     log(f"Status of Stock:{status_text}")
+                    log(f"Record updating for Url:{url}")
                     return manager.update_status(record_id, status_text,"CASIberia Stock Status")
                   
                 else:
                     stock_status1 = soup.find(id="ctl00_contentBody_pnlDiscontinued")
                     status_text1 = stock_status1.get_text().strip()
                     log(f"Status of Stock:{status_text1}")
+                    log(f"Record updating for Url:{url}")
                     return manager.update_status(record_id, status_text1,"CASIberia Stock Status")
                     
             else:
@@ -105,6 +107,7 @@ def view2(url,record_id):
             stock_closeout=soup.find("p", class_="closeout")           
             if stock_closeout:
                 stock_closeout_text=stock_closeout.get_text().strip()
+                log(f"Record updating for Url:{url}")
                 return manager.update_status(record_id, stock_closeout_text,"Windlass Stock Status")
             
             stock_soldout=soup.find("div", class_="out-stockWarp")
@@ -112,7 +115,7 @@ def view2(url,record_id):
             if stock_soldout:
              
                 stock_soldout_text=stock_soldout.text
-               
+                log(f"Record updating for Url:{url}")
                 return manager.update_status(record_id, stock_soldout_text,"Windlass Stock Status")
             
             stock_status = soup.find(id="form-action-addToCart")
@@ -120,21 +123,21 @@ def view2(url,record_id):
                 status_text = stock_status.text
                 if status_text == "Add to Cart":
                     log(f"Status of Stock:{status_text}")
+                    log(f"Record updating for Url:{url}")
                     return manager.update_status(record_id, "in Stock","Windlass Stock Status")
-                    # log(f"Record update successfully for Url:{url}")
+                   
                 else:
                     
                     stock_status_element = soup.find(id="form-action-addToCart") 
                     stock_status_text=stock_status_element.get_text()
                     if stock_status_text=="Pre-Order Now":
-                        
+                        log(f"Record updating for Url:{url}")
                         return manager.update_status(record_id, "This product is on BackOrder and will be shipped later","Windlass Stock Status")
-                        # log(f"Record update successfully for Url:{url}")
+                        
                     else:
+                        log(f"Record updating for Url:{url}")
                         return manager.update_status(record_id, "Out of stock","Windlass Stock Status")
-                        # log(f"Record update successfully for Url:{url}")
-
-
+                        
     except Exception as e:
         log(f"Error in occured in view2:{e}")
 
@@ -151,13 +154,15 @@ def view3(url,record_id):
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
         stock_out=soup.find(id="add-to-cart-wrapper")
-        if stock_out and 'display: none' in stock_out.get('style', ''):   
-                
+        if stock_out and 'display: none' in stock_out.get('style', ''):
+            log(f"Record updating for Url:{url}")                 
             return manager.update_status(record_id, "Out of Stock","Windlass Stock Status")
 
         stock_status_element = soup.find('div', class_='bo-inventory-description')
         if stock_status_element:          
-            stock_status = stock_status_element.get_text()         
+            stock_status = stock_status_element.get_text()   
+            log(f"stock status for ATL:{stock_status}") 
+            log(f"Record updating for Url:{url}")     
             return manager.update_status(record_id, stock_status,"Windlass Stock Status")
     
         stock_status = soup.find(id="form-action-addToCart")
@@ -165,12 +170,15 @@ def view3(url,record_id):
            
             status_text = stock_status.get("value")        
             if status_text == "Add to Cart":
+                log(f"Record updating for Url:{url}")
                 log(f"Status of Stock:{status_text}")
                 return manager.update_status(record_id, "In Stock Now!","Windlass Stock Status")                
             elif  status_text=="Pre-Purchase":
+                log(f"Record updating for Url:{url}")
                 log(f"Status of Stock:{status_text}")
                 return manager.update_status(record_id, "Not in Stock. Pre-Purchase Available.","Windlass Stock Status")
             else:
+                log(f"Record updating for Url:{url}")
                 return manager.update_status(record_id, "Out of Stock","Windlass Stock Status")
     except Exception as e:
         log(f"Error in view3 as{e}")
