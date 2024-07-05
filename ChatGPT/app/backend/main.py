@@ -1,13 +1,4 @@
-import sys
-import os
-
-backendFolderPath = os.path.dirname(os.path.realpath(__file__))
-appFolderPath = os.path.dirname(os.path.realpath(backendFolderPath))
-GptFolderPath = os.path.dirname(os.path.realpath(appFolderPath))
-
-
-sys.path.append(GptFolderPath)
-from flask import Flask, jsonify,request
+from flask import Flask, jsonify, request
 from chat_to_db1 import run_conversation
 from flask_cors import CORS
 app = Flask(__name__)
