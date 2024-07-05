@@ -1,0 +1,8 @@
+flask
+flask_cors
+openai
+python-dotenv
+typing
+sqlalchemy
+langchain_core
+mysql-connector-python
