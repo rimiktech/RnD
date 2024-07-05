@@ -115,9 +115,9 @@ def run_conversation(user_query):
         return response_message
 
 
-if __name__ == '__main__':
-    user_query = "Let me know the total number of clients?"
+# if __name__ == '__main__':
+    # user_query = "Let me know the total number of clients?"
 
-    print("ChatGPT: "+run_conversation(user_query).content)
+    # print("ChatGPT: "+run_conversation(user_query).content)
 
 
