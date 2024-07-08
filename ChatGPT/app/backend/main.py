@@ -5,11 +5,11 @@ app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173","http://127.0.0.1:5500"])
 
 
-@app.get("/api/test")
+@app.get("/test")
 def test():
     return "Test route is working!"
 
-@app.post("/api/chat")
+@app.post("/chat")
 def chat():
     userData = request.get_json()
     userQuery = userData.get('query')
