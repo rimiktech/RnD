@@ -13,9 +13,18 @@ def test():
 def chat():
     userData = request.get_json()
     userQuery = userData.get('query')
-    response = run_conversation(userQuery).content
+    response = run_conversation(userQuery)
+    return response.query
+
+
+@app.post("/api/confirm")
+def confirmQueryExecution():
+    userData = request.get_json()
+    userQuery = userData.get('query')
+    response = run_conversation(userQuery)
     print(response)
     return response
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
