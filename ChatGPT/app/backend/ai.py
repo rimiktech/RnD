@@ -16,7 +16,7 @@ print("Connected.")
 schema_cache = None
 
 def run_query(query):
-    print("Running following query:\n-> '{0}'".format(query))
+    print(f"Running following query:\n-> '{query}'")
     data = db.run(query)
     print("The query has been run successfully.")
     return data 
@@ -52,15 +52,15 @@ Question:
 """
 
 def run_conversation(user_query):
-    print("User: {0}".format(user_query))
+    print(f"User: {user_query}")
     prompt = instructions.format(user_query)
-    messages = [{"role": "user", "content": "{0}".format(prompt)}]
+    messages = [{"role": "user", "content": prompt}]
     tools = [
         {
             "type": "function",
             "function": {
                 "name": "run_query",
-                "description": "Run any sql query to get the data from database",
+                "description": "Run any SQL query to get the data from the database",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -77,74 +77,76 @@ def run_conversation(user_query):
             "type": "function",
             "function": {
                 "name": "get_schema",
-                "description": "To get the schema of the database, that will help to write correct sql queries",
+                "description": "To get the schema of the database, which will help to write correct SQL queries",
             },
         }
     ]
     response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=messages,
-    tools=tools,
-    tool_choice="auto",
+        model="gpt-3.5-turbo",
+        messages=messages,
+        tools=tools,
+        tool_choice="auto",
     )
 
     response_message = response.choices[0].message
-    tool_calls = response_message.tool_calls[0]
-    function_args = json.loads(tool_calls.function.arguments)
+    tool_calls = response_message.tool_calls
+    tool_call = tool_calls[0]
+    function_args = json.loads(tool_call.function.arguments)
     query = function_args.get("query")
-
-    # Create a dictionary representation of response_message
-    serialized_response_message = {
-        'id': response_message.id,
-        'content': response_message.content,
-        # Add other attributes as needed
-    }
-
-    return {
-        'response_message': serialized_response_message,
-        'tool_calls': tool_calls,
-        'function_args': function_args,
-        'query': query
-    }
-
-    # if tool_calls:
-    #     available_functions = {"run_query": run_query, "get_schema": get_schema}
-    #     messages.append(response_message)
-
-    #     while tool_calls:
-    #         tool_call = tool_calls[0]  
-    #         function_name = tool_call.function.name
-    #         function_to_call = available_functions[function_name]
-    #         function_args = json.loads(tool_call.function.arguments)
-
-    #         if function_name == "run_query":
-    #             function_response = function_to_call(query=function_args.get("query"))
-    #         else:
-    #             function_response = function_to_call()
-
-    #         messages.append(
-    #             {
-    #                 "tool_call_id": tool_call.id,
-    #                 "role": "tool",
-    #                 "name": function_name,
-    #                 "content": function_response,
-    #             }
-    #         )
-            
-    #         second_response = client.chat.completions.create(
-    #             model="gpt-3.5-turbo",
-    #             messages=messages,
-    #             tools=tools,
-    #             tool_choice="auto",
-    #         )
-
-    #         response_message = second_response.choices[0].message
-    #         tool_calls = response_message.tool_calls
-    #         messages.append(response_message)
-
+    function_name = tool_call.function.name
+    print("-------------------------------------------------------------------------    ")
+    print(tool_calls)
+    print("-------------------------------------------------------------------------    ")
+    data = [{
+        "messages": messages,
+        "tool_call_type": tool_call.type,
+        "function_name": function_name,
+        "query": query,
+        "tools": tools,
+        "tool_call_id": tool_call.id
+    }]
+    print(data)
     
+    return data
 
+def execute_query_fn(messages, tool_calls, query_to_execute, tools):
+    if tool_calls:
+        available_functions = {"run_query": run_query, "get_schema": get_schema}
+        messages.append(response_message)
+
+        while tool_calls:
+            tool_call = tool_calls[0]  
+            function_name = tool_call.function.name
+            function_to_call = available_functions[function_name]
+            
+            if function_name == "run_query":
+                function_response = function_to_call(query=query_to_execute)
+            else:
+                function_response = function_to_call()
+
+            messages.append(
+                {
+                    "tool_call_id": tool_call.id,
+                    "role": "tool",
+                    "name": function_name,
+                    "content": function_response,
+                }
+            )
+            
+            second_response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                tools=tools,
+                tool_choice="auto",
+            )
+
+            response_message = second_response.choices[0].message
+            tool_calls = response_message.tool_calls
+            messages.append(response_message)
+            print(response_message)
+            return response_message
+
+# Uncomment and modify the following block if you want to run the script directly
 # if __name__ == '__main__':
-    # user_query = "Let me know the total number of clients?"
-
-    # print("ChatGPT: "+run_conversation(user_query).content)
+#     user_query = "Let me know the total number of clients?"
+#     print("ChatGPT: "+run_conversation(user_query).content)
