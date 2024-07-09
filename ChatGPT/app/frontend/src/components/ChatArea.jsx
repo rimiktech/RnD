@@ -94,7 +94,6 @@ const PromptBox = ({ onSendMessage, setMsg }) => {
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-             
               handleSubmit(e);
             }
           }}
@@ -145,53 +144,39 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
     );
   };
 
-  const handleContinueButton = async() => {
+  const handleContinueButton = async () => {
     console.log(msg);
-      try {
-        const response = await axios.post(
-          "http://127.0.0.1:5000/api/confirmQueryExecution",
-          { id: messageId + "_response",
-            reply : data.query,
-            isAltered: false,
-            sender: "rnd",
-            isEditable: false,
-            chat_message : data.chat_message,
-            tool_call_type : data.tool_call_type,
-            function_name: data.function_name,
-            tools: data.tools,
-            tool_call_id : data.tool_call_id },
-          { headers: { "Content-Type": "application/json" } }
-        );
-        // const finalData = response.data[0]
-        console.log(response.data)
-        // setMessages((prevMessages) => [
-        //   ...prevMessages,
-        //   {
-        //     id: messageId + "_response",
-        //     reply : finalData.query,
-        //     isAltered: false,
-        //     sender: "rnd",
-        //     isEditable: false,
-        //     chat_message : finalData.messages,
-        //     tool_call_type : finalData.tool_call_type,
-        //     function_name: finalData.function_name,
-        //     tools: finalData.tools,
-        //     tool_call_id : finalData.tool_call_id
-        //   },
-        // ]);
-      } catch (error) {
-        // const reply = "Sorry, please try again later!";
-        // setMessages((prevMessages) => [
-        //   ...prevMessages,
-        //   { id: messageId + "_error", reply, sender: "rnd", isEditable: false },
-        // ]);
-      }
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:5000/api/confirmQueryExecution",
+        {
+          reply: data.reply,
+          question: data.question,
+        },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      // const finalData = response.data[0]
+      console.log(response.data);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          id: Date.now() + "_response",
+          reply: response.data,
+          isAltered: false,
+          sender: "rnd",
+          isEditable: false,
+          isQueryExecuted: true,
+        },
+      ]);
+    } catch (error) {
+      const reply = "Sorry, please try again later!";
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: messageId + "_error", reply, sender: "rnd", isEditable: false },
+      ]);
+    }
 
-   console.log(data.chat_message,
-   data.tool_call_type,
-    data.function_name,
-   data.tools,
-  data.tool_call_id)
+    console.log(data.chat_message, data.reply);
     setMessages((prevMessages) =>
       prevMessages.map((item) => {
         if (item.id === data.id) {
@@ -207,8 +192,6 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
         return item;
       })
     );
-
-
   };
 
   return (
@@ -258,44 +241,55 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
           ></textarea>
         </div>
         <div className="flex">
-          {data.isEditable !== "done" && data.isEditable !== "cancelled" && (
-            <span
-              onClick={(data)=>{
-                handleContinueButton(data)
-              }}
-              className="cursor-pointer bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300"
-            >
-              Continue
-            </span>
-          )}
+          {!data.isQueryExecuted && (
+            <>
+              {data.isEditable !== "done" &&
+                data.isEditable !== "cancelled" && (
+                  <span
+                    onClick={(data) => {
+                      handleContinueButton(data);
+                    }}
+                    className="cursor-pointer bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300"
+                  >
+                    Continue
+                  </span>
+                )}
 
-          {data.isEditable === false && data.isEditable !== "done" && (
-            <span
-              className="cursor-pointer bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"
-              onClick={handleEditClick}
-            >
-              Edit
-            </span>
-          )}
+              {data.isEditable === false && data.isEditable !== "done" && (
+                <span
+                  className="cursor-pointer bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"
+                  onClick={handleEditClick}
+                >
+                  Edit
+                </span>
+              )}
 
-          {data.isEditable !== "done" && data.isEditable !== "cancelled" && (
-            <span
-              onClick={handleCancelClick}
-              className="cursor-pointer bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"
-            >
-              Cancel
-            </span>
-          )}
+              {data.isEditable !== "done" &&
+                data.isEditable !== "cancelled" && (
+                  <span
+                    onClick={handleCancelClick}
+                    className="cursor-pointer bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"
+                  >
+                    Cancel
+                  </span>
+                )}
 
-          {data.isEditable === "cancelled" && (
-            <span className="cursor-default bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
-              Cancelled
-            </span>
-          )}
+              {data.isEditable === "cancelled" && (
+                <span className="cursor-default bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
+                  Cancelled
+                </span>
+              )}
 
-          {data.isEditable == "done" && (
+              {data.isEditable == "done" && (
+                <span className="cursor-default bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                  Completed
+                </span>
+              )}
+            </>
+          )}
+          {data.isQueryExecuted && (
             <span className="cursor-default bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-              Completed
+              Executed
             </span>
           )}
         </div>
@@ -337,21 +331,18 @@ const ChatArea = () => {
         { query: message },
         { headers: { "Content-Type": "application/json" } }
       );
-      const finalData = response.data[0]
-      console.log(response.data[0])
+      const finalData = response.data[0];
+      console.log(response.data[0]);
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           id: messageId + "_response",
-          reply : finalData.query,
+          reply: finalData.query,
           isAltered: false,
           sender: "rnd",
           isEditable: false,
-          chat_message : finalData.messages,
-          tool_call_type : finalData.tool_call_type,
-          function_name: finalData.function_name,
-          tools: finalData.tools,
-          tool_call_id : finalData.tool_call_id
+          question: finalData.question,
+          isQueryExecuted: false,
         },
       ]);
     } catch (error) {
