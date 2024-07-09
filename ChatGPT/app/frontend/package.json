@@ -11,11 +11,13 @@
   },
   "dependencies": {
     "axios": "^1.7.2",
+    "env-cmd": "^10.1.0",
     "flowbite": "^2.4.1",
     "flowbite-react": "^0.10.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.24.1"
+    "react-router-dom": "^6.24.1",
+    "serve": "^14.2.3"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

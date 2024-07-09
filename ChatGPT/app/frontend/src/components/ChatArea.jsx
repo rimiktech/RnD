@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { FaRegUserCircle } from "react-icons/fa";
 import { AiFillAliwangwang } from "react-icons/ai";
 import axios from "axios";
+import { API_URL } from '../config';
+
+
 
 const PromptBox = ({ onSendMessage, setMsg }) => {
   const [message, setMessage] = useState([]);
@@ -31,10 +34,10 @@ const PromptBox = ({ onSendMessage, setMsg }) => {
       <label htmlFor="chat" className="sr-only">
         Your message
       </label>
-      <div className="flex items-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700">
+      <div className="flex items-center px-3 py-2 rounded-lg bg-gray-50 ">
         <button
           type="button"
-          className="inline-flex justify-center p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
+          className="inline-flex justify-center p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100"
         >
           <svg
             className="w-5 h-5"
@@ -66,7 +69,7 @@ const PromptBox = ({ onSendMessage, setMsg }) => {
         </button>
         <button
           type="button"
-          className="p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
+          className="p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100 "
         >
           <svg
             className="w-5 h-5"
@@ -88,7 +91,7 @@ const PromptBox = ({ onSendMessage, setMsg }) => {
         <textarea
           id="chat"
           rows="1"
-          className="block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          className="block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 "
           placeholder="Your message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -102,7 +105,7 @@ const PromptBox = ({ onSendMessage, setMsg }) => {
         <button
           type="submit"
           onClick={handleSubmit}
-          className="inline-flex justify-center p-2 text-blue-600 rounded-full cursor-pointer hover:bg-blue-100 dark:text-blue-500 dark:hover:bg-gray-600"
+          className="inline-flex justify-center p-2 text-blue-600 rounded-full cursor-pointer hover:bg-blue-100 "
         >
           <svg
             className="w-5 h-5 rotate-90 rtl:-rotate-90"
@@ -148,7 +151,7 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
     console.log(msg);
     try {
       const response = await axios.post(
-        "http://127.0.0.1:5000/api/confirmQueryExecution",
+        `${API_URL}/api/continue`,
         {
           reply: data.reply,
           question: data.question,
@@ -172,7 +175,7 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
       const reply = "Sorry, please try again later!";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: messageId + "_error", reply, sender: "rnd", isEditable: false },
+        { id:  Date.now() + "_error", reply, sender: "rnd", isEditable: false , isQueryExecuted:true },
       ]);
     }
 
@@ -199,13 +202,19 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
       <AiFillAliwangwang className="w-8 h-8 rounded-full" />
       <div className="flex flex-col gap-1 w-full max-w-[320px]">
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+          <span className="text-sm font-semibold text-gray-900">
             RnD
           </span>
         </div>
-        <div className="flex flex-col leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
+        
+        {!data.isQueryExecuted && (
+                <span className="cursor-default bg-indigo-100 text-indigo-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
+This query will be executed on the database. Click 'Continue' to proceed or 'Edit' to modify the query.
+                </span>
+              )}
+        <div className="flex flex-col leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
           <p
-            className="text-sm font-normal text-gray-900 dark:text-white"
+            className="text-sm font-normal text-gray-900"
             style={{
               display:
                 data.isEditable === false ||
@@ -218,7 +227,7 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
             {msg}
           </p>
           <textarea
-            className="text-sm font-normal text-gray-900 dark:text-white"
+            className="text-sm font-normal text-gray-900"
             style={{
               display:
                 data.isEditable == "done" ||
@@ -249,7 +258,7 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
                     onClick={(data) => {
                       handleContinueButton(data);
                     }}
-                    className="cursor-pointer bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300"
+                    className="cursor-pointer bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full "
                   >
                     Continue
                   </span>
@@ -257,7 +266,7 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
 
               {data.isEditable === false && data.isEditable !== "done" && (
                 <span
-                  className="cursor-pointer bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300"
+                  className="cursor-pointer bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full "
                   onClick={handleEditClick}
                 >
                   Edit
@@ -268,30 +277,26 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
                 data.isEditable !== "cancelled" && (
                   <span
                     onClick={handleCancelClick}
-                    className="cursor-pointer bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300"
+                    className="cursor-pointer bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full "
                   >
                     Cancel
                   </span>
                 )}
 
               {data.isEditable === "cancelled" && (
-                <span className="cursor-default bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
+                <span className="cursor-default bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full ">
                   Cancelled
                 </span>
               )}
 
               {data.isEditable == "done" && (
-                <span className="cursor-default bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-                  Completed
+                <span className="cursor-default bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
+                  Executed
                 </span>
               )}
             </>
           )}
-          {data.isQueryExecuted && (
-            <span className="cursor-default bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-              Executed
-            </span>
-          )}
+         
         </div>
       </div>
     </div>
@@ -303,8 +308,8 @@ const ChatBubbleRight = ({ message }) => {
     <div className="flex items-start justify-end gap-2.5 mt-5">
       <div className="flex flex-col gap-1 w-full max-w-[320px]">
         <div className="flex items-center justify-end space-x-2 rtl:space-x-reverse"></div>
-        <div className="flex flex-col leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
-          <p className="text-sm font-normal text-gray-900 dark:text-white">
+        <div className="flex flex-col leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl ">
+          <p className="text-sm font-normal text-gray-900 ">
             {message}
           </p>
         </div>
@@ -327,29 +332,38 @@ const ChatArea = () => {
   const getResponse = async (message, messageId) => {
     try {
       const response = await axios.post(
-        "http://127.0.0.1:5000/api/chat",
+        `${API_URL}/api/chat`,
         { query: message },
         { headers: { "Content-Type": "application/json" } }
       );
       const finalData = response.data[0];
       console.log(response.data[0]);
+      if(finalData.query){
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id:  Date.now() + "_response",
+            reply: finalData.query,
+            isAltered: false,
+            sender: "rnd",
+            isEditable: false,
+            question: finalData.question,
+            isQueryExecuted: false,
+          },
+        ]);
+      }
+      else{
+        const reply = "Sorry, please try again later!";
       setMessages((prevMessages) => [
         ...prevMessages,
-        {
-          id: messageId + "_response",
-          reply: finalData.query,
-          isAltered: false,
-          sender: "rnd",
-          isEditable: false,
-          question: finalData.question,
-          isQueryExecuted: false,
-        },
+        { id:  Date.now() + "_error", reply, sender: "rnd", isEditable: false , isQueryExecuted:true },
       ]);
+      }
     } catch (error) {
       const reply = "Sorry, please try again later!";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: messageId + "_error", reply, sender: "rnd", isEditable: false },
+        { id:  Date.now() + "_error", reply, sender: "rnd", isEditable: false , isQueryExecuted:true },
       ]);
     }
   };

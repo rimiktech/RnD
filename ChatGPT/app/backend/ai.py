@@ -104,7 +104,7 @@ def run_conversation(user_query):
     return data
 
 
-def execute_query_fn(question , query_to_execute):
+def execute_query(question , query_to_execute):
     execution_instruction = """
     The user question was {0} and output is {1} , restructure this the given output according to question
     """
