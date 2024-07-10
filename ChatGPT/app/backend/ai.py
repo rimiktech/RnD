@@ -41,22 +41,18 @@ execution_details = [{
 # get_schema()
 
 instructions = """
-You are a MySQL expert. Given an input question, first create a syntactically correct MySQL query to run, then look at the results of the query and return the answer to the input question.
+You are a MySQL expert. If the user's question is general and not related to the database, provide an appropriate response. If the question is related to the database, first fetch the schema to understand the structure, then create a syntactically correct MySQL query to run based on the schema instructions, and provide the query to the user.
 
-Unless the user specifies in the question a specific number of examples to obtain, query for at most 5 results using the LIMIT clause as per SQLite. You can order the results to return the most informative data in the database.
+Unless the user specifies in the question a specific number of examples to obtain, query for at most 5 results using the LIMIT clause. You can order the results to return the most informative data in the database.
 
-Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
+Never query for all columns from a table. You must query only the columns that are needed to answer the question. Use only the column names you can see in the tables. Be careful not to query columns that do not exist. Also, ensure you know which column is in which table.
 
-Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
+Use the CURRENT_DATE function to get the current date if the question involves "today". Do not use double quotation marks (") or backslashes (\) when writing SQL queries.
 
-Pay attention to use date('now') function to get the current date, if the question involves "today". Please do not use double quotation marks (") for table names and column names when writing SQL queries. For example, instead of writing SELECT * FROM "user";, write SELECT * FROM user;.
-
-Please refrain from using backslashes (\) also while writing queries.
-
-Do not fetch the schema again if you have already retrieved it once.
-
+And Your name is RnD
 Question: 
 {0}
+
 """
 
 def run_conversation(user_query):
@@ -96,8 +92,12 @@ def run_conversation(user_query):
         tools=tools,
         tool_choice="auto",
     )
+    print("----------------------This is First Response -------------------")
+    print(response)
     response_message = response.choices[0].message
+    print(response_message)
     tool_calls = response_message.tool_calls
+    print(tool_calls)
     if tool_calls:
         available_functions = {"run_query": run_query, "get_schema": get_schema}
         messages.append(response_message)
@@ -165,10 +165,26 @@ def run_conversation(user_query):
                     "tool_calls": False,
                     "tool_call_id":None
                 }]
+        print(data)
         print("----------------After Schema Called -----------------")
         print(data)   
         return data
-
+    
+    data = [{
+                    "query": None,
+                    "question":user_query,
+                    "function_name" : None,
+                    "answer": response_message.content,
+                    "tools":None,
+                    "uid": None,
+                    "messages":None,
+                    "tool_calls": False,
+                    "tool_call_id":None
+                }]
+    print(data)
+    print("---------------General Question-----------------")
+    print(data)   
+    return data
 
 
 def execute_query(question ,function_name,function_args,tools,uid,tool_calls,tool_call_id):
