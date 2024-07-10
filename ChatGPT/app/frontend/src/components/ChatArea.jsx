@@ -156,7 +156,7 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
           function_name:data.function_name,
           function_args : data.function_args,
           tools: data.tools,
-          messages : data.messages_data,
+          uid : data.uid,
           tool_calls: data.tool_calls,
           tool_call_id : data.tool_call_id
 
@@ -170,7 +170,7 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
         ...prevMessages,
         {
           id: Date.now() + "_response",
-          reply: response.data,
+          reply: response.data[0].answer,
           isAltered: false,
           sender: "rnd",
           isEditable: false,
@@ -219,8 +219,8 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
 
         {!data.isQueryExecuted && (
           <span className="cursor-default bg-indigo-100 text-indigo-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
-            This query will be executed on the database. Click 'Continue' to
-            proceed or 'Edit' to modify the query.
+Query to be run on the database.
+{/* { <br/> } Click <b>'Continue'</b> to proceed or <b>'Edit'</b> to modify. */}
           </span>
         )}
         <div className="flex flex-col leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
@@ -359,7 +359,7 @@ const ChatArea = () => {
             function_name: finalData.function_name,
             answer: finalData.answer,
             tools: finalData.tools,
-            messages_data: finalData.messages,
+            uid: finalData.uid,
             tool_calls: finalData.tool_calls,
             tool_call_id: finalData.tool_call_id,
             isQueryExecuted: false,

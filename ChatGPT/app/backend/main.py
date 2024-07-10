@@ -27,7 +27,7 @@ def continueExecution():
     function_name = userData.get('function_name')
     function_args = userData.get('function_args')
     tools = userData.get('tools')
-    messages = userData.get('messages')
+    uid = userData.get('uid')
     tool_calls = userData.get('tool_calls')
     tool_call_id = userData.get('tool_call_id')
     
@@ -37,12 +37,12 @@ def continueExecution():
     print("function_name : ", function_name)
     print("function_args : ", function_args)
     print("tools : ", tools)
-    print("messages : ", messages)
+    print("uid : ", uid)
     print("tool_calls : ", tool_calls)
     print("tool_call_id : ", tool_call_id)
     print("------------------------- Data recived--------------------------------------------")
  
-    response = execute_query(question ,function_name,userQuery,tools,messages,tool_calls,tool_call_id)
+    response = execute_query(question ,function_name,userQuery,tools,uid,tool_calls,tool_call_id)
     print(response)
     return jsonify(response) 
 

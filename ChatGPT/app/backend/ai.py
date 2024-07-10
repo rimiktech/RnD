@@ -3,6 +3,7 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 from utilities.Database import SQLDatabase
+import uuid
 
 load_dotenv()
 mysql_uri = os.getenv("mysql_uri")
@@ -31,6 +32,11 @@ def get_schema():
     schema_cache = db.get_table_info()
     print("Got the schema.")
     return schema_cache
+
+execution_details = [{
+    "uid" : "",
+    "messages":""
+}]
 
 # get_schema()
 
@@ -105,12 +111,20 @@ def run_conversation(user_query):
             
             if function_name == "run_query":
                 query = function_args.get("query")
+                
+                uid = str(uuid.uuid4())
+                global execution_details
+                appendData = {
+                  "uid": uid,
+                  "messages" : messages  
+                }
+                execution_details.append(appendData)
                 data = [{
                     "query": query,
                     "question":user_query,
                     "function_name" : function_name,
                     "answer":None,
-                    "messages":actual_message,
+                    "uid":uid,
                     "tools":tools,
                     "tool_calls": True,
                     "tool_call_id":tool_call.id
@@ -146,6 +160,7 @@ def run_conversation(user_query):
                     "function_name" : None,
                     "answer": response_message.content,
                     "tools":None,
+                    "uid": None,
                     "messages":None,
                     "tool_calls": False,
                     "tool_call_id":None
@@ -156,11 +171,15 @@ def run_conversation(user_query):
 
 
 
-def execute_query(question ,function_name,function_args,tools,messages,tool_calls,tool_call_id):
-    execution_instruction = """
-    The user question was {0} and output is {1} , restructure this the given output according to question
-    """
+def execute_query(question ,function_name,function_args,tools,uid,tool_calls,tool_call_id):
+    global execution_details
+    messages = ""
     
+    print(execution_details)
+    for detail in execution_details:
+        if detail["uid"] == uid:
+            messages = detail["messages"]
+    print(messages)
     if tool_calls:
         available_functions = {"run_query": run_query, "get_schema": get_schema}
         
@@ -207,10 +226,14 @@ def execute_query(question ,function_name,function_args,tools,messages,tool_call
                     "answer": response_message.content,
                     "tools":None,
                     "messages":None,
+                    "uid":None,
                     "tool_calls": False,
                     "tool_call_id":None
                 }]
-        
+        # for detail in execution_details:
+        #     if detail["uid"] == uid:
+        #         execution_details.pop(detail)
+                
         print("--------------Final output to user --------------")
         print(data)
         return data
