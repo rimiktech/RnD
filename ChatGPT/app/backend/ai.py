@@ -56,6 +56,7 @@ Question:
 def run_conversation(user_query):
     print(f"User: {user_query}")
     prompt = instructions.format(user_query)
+    actual_message = [{"role": "user", "content": prompt}]
     messages = [{"role": "user", "content": prompt}]
     tools = [
         {
@@ -89,37 +90,131 @@ def run_conversation(user_query):
         tools=tools,
         tool_choice="auto",
     )
-
     response_message = response.choices[0].message
     tool_calls = response_message.tool_calls
-    tool_call = tool_calls[0]
-    function_args = json.loads(tool_call.function.arguments)
-    query = function_args.get("query")
-    data = [{
-        "query": query,
-        "question":user_query
-        
-    }]
-    print(data)
-    return data
+    if tool_calls:
+        available_functions = {"run_query": run_query, "get_schema": get_schema}
+        messages.append(response_message)
+
+        while tool_calls:
+            tool_call = tool_calls[0]  
+            function_name = tool_call.function.name
+            function_to_call = available_functions[function_name]
+            function_args = json.loads(tool_call.function.arguments)
+
+            
+            if function_name == "run_query":
+                query = function_args.get("query")
+                data = [{
+                    "query": query,
+                    "question":user_query,
+                    "function_name" : function_name,
+                    "answer":None,
+                    "messages":actual_message,
+                    "tools":tools,
+                    "tool_calls": True,
+                    "tool_call_id":tool_call.id
+                }]
+                print("----------------Run Query -----------------")
+                print(data)
+                return data
+            else:
+                function_response = function_to_call()
+
+            messages.append(
+                {
+                    "tool_call_id": tool_call.id,
+                    "role": "tool",
+                    "name": function_name,
+                    "content": function_response,
+                }
+            )
+            
+            second_response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                tools=tools,
+                tool_choice="auto",
+            )
+
+            response_message = second_response.choices[0].message
+            tool_calls = response_message.tool_calls
+            messages.append(response_message)
+        data = [{
+                    "query": None,
+                    "question":user_query,
+                    "function_name" : None,
+                    "answer": response_message.content,
+                    "tools":None,
+                    "messages":None,
+                    "tool_calls": False,
+                    "tool_call_id":None
+                }]
+        print("----------------After Schema Called -----------------")
+        print(data)   
+        return data
 
 
-def execute_query(question , query_to_execute):
+
+def execute_query(question ,function_name,function_args,tools,messages,tool_calls,tool_call_id):
     execution_instruction = """
     The user question was {0} and output is {1} , restructure this the given output according to question
     """
-    output = run_query(query_to_execute)
     
-    prompt = execution_instruction.format(question, output)
-    messages = [{"role": "user", "content": prompt}]
-    
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=messages
-    )
-    print(response)
+    if tool_calls:
+        available_functions = {"run_query": run_query, "get_schema": get_schema}
+        
+        while tool_calls:
+            function_to_call = available_functions[function_name]  
+            
+            if function_name == "run_query":
+                function_response = function_to_call(query=function_args)
+            else:
+                function_response = function_to_call()
 
-    return response.choices[0].message.content
+            messages.append(
+                {
+                    "tool_call_id": tool_call_id,
+                    "role": "tool",
+                    "name": function_name,
+                    "content": function_response,
+                }
+            )
+            
+            second_response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                tools=tools,
+                tool_choice="auto",
+            )
+
+            response_message = second_response.choices[0].message
+            if(response_message.tool_calls):
+                tool_calls = response_message.tool_calls
+                tool_call = tool_calls[0]  
+                function_name = tool_call.function.name
+                function_args = json.loads(tool_call.function.arguments)
+                tool_calls = True
+            else:
+                tool_calls=False
+                
+            messages.append(response_message)
+            
+        data = [{
+                    "query": None,
+                    "question":question,
+                    "function_name" : None,
+                    "answer": response_message.content,
+                    "tools":None,
+                    "messages":None,
+                    "tool_calls": False,
+                    "tool_call_id":None
+                }]
+        
+        print("--------------Final output to user --------------")
+        print(data)
+        return data
+    
 # Example usage:
 # if __name__ == '__main__':
 #     user_query = "SELECT count(*) as user_count FROM user;"

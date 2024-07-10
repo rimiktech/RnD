@@ -14,23 +14,37 @@ def chat():
     userData = request.get_json()
     userQuery = userData.get('query')
     response = run_conversation(userQuery)
-    return jsonify(response)  
+    return  response
 
 
 @app.post("/api/continue")
 def continueExecution():
     print("Executed")
+    
     userData = request.get_json()
     userQuery = userData.get('reply')
     question = userData.get('question')
+    function_name = userData.get('function_name')
+    function_args = userData.get('function_args')
+    tools = userData.get('tools')
+    messages = userData.get('messages')
+    tool_calls = userData.get('tool_calls')
+    tool_call_id = userData.get('tool_call_id')
+    
     print("------------------------- Data recived--------------------------------------------")
     print("User Query: ", userQuery)
     print("Question : ", question)
+    print("function_name : ", function_name)
+    print("function_args : ", function_args)
+    print("tools : ", tools)
+    print("messages : ", messages)
+    print("tool_calls : ", tool_calls)
+    print("tool_call_id : ", tool_call_id)
     print("------------------------- Data recived--------------------------------------------")
-    response = execute_query(question,userQuery)
+ 
+    response = execute_query(question ,function_name,userQuery,tools,messages,tool_calls,tool_call_id)
     print(response)
     return jsonify(response) 
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

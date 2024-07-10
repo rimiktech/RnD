@@ -2,9 +2,7 @@ import React, { useState } from "react";
 import { FaRegUserCircle } from "react-icons/fa";
 import { AiFillAliwangwang } from "react-icons/ai";
 import axios from "axios";
-import { API_URL } from '../config';
-
-
+import { API_URL } from "../config";
 
 const PromptBox = ({ onSendMessage, setMsg }) => {
   const [message, setMessage] = useState([]);
@@ -155,9 +153,17 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
         {
           reply: data.reply,
           question: data.question,
+          function_name:data.function_name,
+          function_args : data.function_args,
+          tools: data.tools,
+          messages : data.messages_data,
+          tool_calls: data.tool_calls,
+          tool_call_id : data.tool_call_id
+
         },
         { headers: { "Content-Type": "application/json" } }
       );
+
       // const finalData = response.data[0]
       console.log(response.data);
       setMessages((prevMessages) => [
@@ -175,7 +181,13 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
       const reply = "Sorry, please try again later!";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id:  Date.now() + "_error", reply, sender: "rnd", isEditable: false , isQueryExecuted:true },
+        {
+          id: Date.now() + "_error",
+          reply,
+          sender: "rnd",
+          isEditable: false,
+          isQueryExecuted: true,
+        },
       ]);
     }
 
@@ -202,16 +214,15 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
       <AiFillAliwangwang className="w-8 h-8 rounded-full" />
       <div className="flex flex-col gap-1 w-full max-w-[320px]">
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
-          <span className="text-sm font-semibold text-gray-900">
-            RnD
-          </span>
+          <span className="text-sm font-semibold text-gray-900">RnD</span>
         </div>
-        
+
         {!data.isQueryExecuted && (
-                <span className="cursor-default bg-indigo-100 text-indigo-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
-This query will be executed on the database. Click 'Continue' to proceed or 'Edit' to modify the query.
-                </span>
-              )}
+          <span className="cursor-default bg-indigo-100 text-indigo-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
+            This query will be executed on the database. Click 'Continue' to
+            proceed or 'Edit' to modify the query.
+          </span>
+        )}
         <div className="flex flex-col leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
           <p
             className="text-sm font-normal text-gray-900"
@@ -296,7 +307,6 @@ This query will be executed on the database. Click 'Continue' to proceed or 'Edi
               )}
             </>
           )}
-         
         </div>
       </div>
     </div>
@@ -309,9 +319,7 @@ const ChatBubbleRight = ({ message }) => {
       <div className="flex flex-col gap-1 w-full max-w-[320px]">
         <div className="flex items-center justify-end space-x-2 rtl:space-x-reverse"></div>
         <div className="flex flex-col leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl ">
-          <p className="text-sm font-normal text-gray-900 ">
-            {message}
-          </p>
+          <p className="text-sm font-normal text-gray-900 ">{message}</p>
         </div>
       </div>
       <FaRegUserCircle className="w-8 h-8 rounded-full" />
@@ -338,32 +346,49 @@ const ChatArea = () => {
       );
       const finalData = response.data[0];
       console.log(response.data[0]);
-      if(finalData.query){
+      if (finalData.query) {
         setMessages((prevMessages) => [
           ...prevMessages,
           {
-            id:  Date.now() + "_response",
+            id: Date.now() + "_response",
             reply: finalData.query,
             isAltered: false,
             sender: "rnd",
             isEditable: false,
             question: finalData.question,
+            function_name: finalData.function_name,
+            answer: finalData.answer,
+            tools: finalData.tools,
+            messages_data: finalData.messages,
+            tool_calls: finalData.tool_calls,
+            tool_call_id: finalData.tool_call_id,
             isQueryExecuted: false,
           },
         ]);
-      }
-      else{
+      } else {
         const reply = "Sorry, please try again later!";
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id:  Date.now() + "_error", reply, sender: "rnd", isEditable: false , isQueryExecuted:true },
-      ]);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: Date.now() + "_error",
+            sender: "rnd",
+            reply: finalData.answer,
+            isEditable: false,
+            isQueryExecuted: true,
+          },
+        ]);
       }
     } catch (error) {
       const reply = "Sorry, please try again later!";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id:  Date.now() + "_error", reply, sender: "rnd", isEditable: false , isQueryExecuted:true },
+        {
+          id: Date.now() + "_error",
+          reply,
+          sender: "rnd",
+          isEditable: false,
+          isQueryExecuted: true,
+        },
       ]);
     }
   };
