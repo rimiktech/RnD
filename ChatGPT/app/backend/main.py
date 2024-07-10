@@ -9,7 +9,7 @@ CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5500","http://192.
 def test():
     return "Test route is working!"
 
-@app.post("/api/chat")
+@app.post("/chat")
 def chat():
     userData = request.get_json()
     userQuery = userData.get('query')
@@ -17,7 +17,7 @@ def chat():
     return  response
 
 
-@app.post("/api/continue")
+@app.post("/continue")
 def continueExecution():
     print("Executed")
     
