@@ -153,8 +153,8 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
     console.log(msg);
     try {
       const response = await axios.post(
-        // `${API_URL}/api/continue`,
-        `/api/continue`,
+        `${API_URL}/api/continue`,
+        // `/api/continue`,
         {
           reply: data.reply,
           question: data.question,
@@ -378,8 +378,8 @@ const ChatArea = () => {
   const getResponse = async (message, messageId) => {
     try {
       const response = await axios.post(
-        // `${API_URL}/api/chat`,
-        `/api/chat`,
+        `${API_URL}/api/chat`,
+        // `/api/chat`,
 
         { query: message },
         { headers: { "Content-Type": "application/json" } }
