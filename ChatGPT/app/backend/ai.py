@@ -243,8 +243,8 @@ def execute_query(question ,function_name,function_args,tools,uid,tool_calls,too
                     "tools":None,
                     "messages":None,
                     "uid":None,
+                    "isExecutedOnDB":True,
                     "tool_calls": False,
-                    "tool_call_id":None
                 }]
         # for detail in execution_details:
         #     if detail["uid"] == uid:

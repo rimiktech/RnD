@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaRegUserCircle } from "react-icons/fa";
 import { AiFillAliwangwang } from "react-icons/ai";
 import axios from "axios";
 import { API_URL } from "../config";
+import { useRef } from "react";
+import classNames from "classnames";
+import "./ChatAreaCss.scss";
+import { CopyBlock } from "react-code-blocks";
 
 const PromptBox = ({ onSendMessage, setMsg }) => {
   const [message, setMessage] = useState([]);
@@ -149,34 +153,33 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
     console.log(msg);
     try {
       const response = await axios.post(
-        `${API_URL}/api/continue`,
+        // `${API_URL}/api/continue`,
+        `/api/continue`,
         {
           reply: data.reply,
           question: data.question,
-          function_name:data.function_name,
-          function_args : data.function_args,
+          function_name: data.function_name,
+          function_args: data.function_args,
           tools: data.tools,
-          uid : data.uid,
+          uid: data.uid,
           tool_calls: data.tool_calls,
-          tool_call_id : data.tool_call_id
-
+          tool_call_id: data.tool_call_id,
         },
         { headers: { "Content-Type": "application/json" } }
       );
 
       // const finalData = response.data[0]
       console.log(response.data);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          id: Date.now() + "_response",
-          reply: response.data[0].answer,
-          isAltered: false,
-          sender: "rnd",
-          isEditable: false,
-          isQueryExecuted: true,
-        },
-      ]);
+      setMessages((prevMessages) =>
+        prevMessages.map((item) => {
+          if (item.id === data.id) {
+            return { ...item, isOutput: response.data[0].answer};
+          }
+          
+        
+          return item;
+        })
+      );
     } catch (error) {
       const reply = "Sorry, please try again later!";
       setMessages((prevMessages) => [
@@ -186,7 +189,9 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
           reply,
           sender: "rnd",
           isEditable: false,
+          tool_calls: false,
           isQueryExecuted: true,
+          isExecutedOnDB: true,
         },
       ]);
     }
@@ -210,20 +215,46 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
   };
 
   return (
-    <div className="flex items-start gap-2.5 mt-5 box-border">
-      <AiFillAliwangwang className="w-8 h-8 rounded-full" />
+    <div
+      className={classNames("flex items-start gap-2.5   box-border", {
+        "mt-5": !data.isExecutedOnDB,
+      })}
+    >
+      <AiFillAliwangwang
+        className="w-8 h-8 rounded-full"
+        style={{ visibility: data.isExecutedOnDB ? "hidden" : "visible" }}
+      />
       <div className="flex flex-col gap-1 w-full max-w-[320px]">
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
-          <span className="text-sm font-semibold text-gray-900">RnD</span>
+          <span
+            className="text-sm font-semibold text-gray-900"
+            style={{ display: data.isExecutedOnDB ? "none" : "block" }}
+          >
+            RnD
+          </span>
         </div>
 
-        {!data.isQueryExecuted && (
-          <span className="cursor-default bg-indigo-100 text-indigo-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
-Query to be run on the database.
-{/* { <br/> } Click <b>'Continue'</b> to proceed or <b>'Edit'</b> to modify. */}
+        {!data.isQueryExecuted &&
+          data.isEditable != "done" &&
+          data.isEditable != "cancelled" && (
+            <span className="cursor-default w-fit bg-indigo-100 text-indigo-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
+              Query to be run on the database.
+              {/* { <br/> } Click <b>'Continue'</b> to proceed or <b>'Edit'</b> to modify. */}
+            </span>
+          )}
+        {!data.isQueryExecuted && data.isEditable == "done" && (
+          <span className="cursor-default w-fit bg-green-100  text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
+            Query executed on database.
+            {/* { <br/> } Click <b>'Continue'</b> to proceed or <b>'Edit'</b> to modify. */}
           </span>
         )}
-        <div className="flex flex-col leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
+        {!data.isQueryExecuted && data.isEditable == "cancelled" && (
+          <span className="cursor-default w-fit bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
+            Query execution cancelled.
+            {/* { <br/> } Click <b>'Continue'</b> to proceed or <b>'Edit'</b> to modify. */}
+          </span>
+        )}
+        <div className="flex flex-col  w-fit  box-content leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
           <p
             className="text-sm font-normal text-gray-900"
             style={{
@@ -235,7 +266,20 @@ Query to be run on the database.
                   : "none",
             }}
           >
-            {msg}
+            {data.tool_calls && (
+              <>
+
+              <CopyBlock
+                text={msg}
+                language={"sql"}
+                className="w-fit"
+                // showLineNumbers={2}
+                wrapLines
+              />
+              <p> {data.isOutput}</p>
+              </>
+            )}
+            {!data.tool_calls && <p>{msg}</p>}
           </p>
           <textarea
             className="text-sm font-normal text-gray-900"
@@ -293,18 +337,6 @@ Query to be run on the database.
                     Cancel
                   </span>
                 )}
-
-              {data.isEditable === "cancelled" && (
-                <span className="cursor-default bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full ">
-                  Cancelled
-                </span>
-              )}
-
-              {data.isEditable == "done" && (
-                <span className="cursor-default bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">
-                  Executed
-                </span>
-              )}
             </>
           )}
         </div>
@@ -330,7 +362,13 @@ const ChatBubbleRight = ({ message }) => {
 const ChatArea = () => {
   const [messages, setMessages] = useState([]);
   const [query, setQuery] = useState("");
-
+  const chatSectionRef = useRef(null);
+  useEffect(() => {
+    console.log(chatSectionRef);
+    if (chatSectionRef.current != null) {
+      chatSectionRef.current.scrollTop = chatSectionRef.current.scrollHeight;
+    }
+  }, [messages]);
   const handleSendMessage = (message) => {
     const newMessage = { id: Date.now(), message, sender: "user" };
     setMessages((prevMessages) => [...prevMessages, newMessage]);
@@ -340,7 +378,9 @@ const ChatArea = () => {
   const getResponse = async (message, messageId) => {
     try {
       const response = await axios.post(
-        `${API_URL}/api/chat`,
+        // `${API_URL}/api/chat`,
+        `/api/chat`,
+
         { query: message },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -363,6 +403,8 @@ const ChatArea = () => {
             tool_calls: finalData.tool_calls,
             tool_call_id: finalData.tool_call_id,
             isQueryExecuted: false,
+            isExecutedOnDB: false,
+            isOutput: "",
           },
         ]);
       } else {
@@ -375,6 +417,8 @@ const ChatArea = () => {
             reply: finalData.answer,
             isEditable: false,
             isQueryExecuted: true,
+            tool_calls: false,
+            isExecutedOnDB: false,
           },
         ]);
       }
@@ -388,6 +432,8 @@ const ChatArea = () => {
           sender: "rnd",
           isEditable: false,
           isQueryExecuted: true,
+          tool_calls: false,
+          isExecutedOnDB: false,
         },
       ]);
     }
@@ -396,13 +442,17 @@ const ChatArea = () => {
   return (
     <>
       <div className="h-screen flex w-screen box-border">
-        <div className="left w-1/5 mr-20 border-black h-dvh"></div>
+        <div
+          className="left w-1/5 mr-20 border-black h-dvh"
+          id="left-section"
+        ></div>
         <div className="right flex flex-col w-4/5 box-border">
           <div
-            className="box-border p-5 w-full"
+            id="chat-section"
+            className="box-border p-5 py-10 w-full overflow-x-hidden overflow-y-auto"
+            ref={chatSectionRef}
             style={{
               alignContent: "center",
-              overflow: "scroll",
               height: "95vh",
             }}
           >
@@ -423,7 +473,7 @@ const ChatArea = () => {
           </div>
 
           <div
-            className="fixed bottom-0 right-5 self-center overflow-auto"
+            className="fixed bottom-0 right-5 self-center overflow-x-hidden overflow-y-auto"
             style={{ width: "74%", alignContent: "center" }}
           >
             <PromptBox onSendMessage={handleSendMessage} setMsg={setMessages} />

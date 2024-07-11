@@ -41,7 +41,7 @@ def continueExecution():
     print("tool_calls : ", tool_calls)
     print("tool_call_id : ", tool_call_id)
     print("------------------------- Data recived--------------------------------------------")
- 
+    
     response = execute_query(question ,function_name,userQuery,tools,uid,tool_calls,tool_call_id)
     print(response)
     return jsonify(response) 
