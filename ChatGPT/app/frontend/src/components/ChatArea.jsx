@@ -230,7 +230,7 @@ const ChatBubbleLeft = ({ msg, data, setMessages, query, setQuery }) => {
             className="text-sm font-semibold text-gray-900"
             style={{ display: data.isExecutedOnDB ? "none" : "block" }}
           >
-            RnD
+            Rimik Technologies
           </span>
         </div>
 
