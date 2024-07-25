@@ -9,7 +9,7 @@ load_dotenv()
 
 LOGS_PATH = "./logs"
 TABLE_NAME = "trading_journal_source_t1"
-CSV_FILE_PATH = "./data/ctr_must_start_from_ptr_target_hit_preview_all_minuteTimeframes.csv"
+CSV_FILE_PATH = "./data/ctr_must_start_from_ptr_target_hit_preview 060624 - 071924.csv"
 
 class Database:
     
@@ -85,7 +85,7 @@ def main():
     diff_df = pattern_difference(database_df, csv_df)
 
     log("Generating result's csv...")
-    diff_df.to_csv('compared_records.csv', index=False)
+    diff_df.to_csv('compared_records1.csv', index=False)
     log("Completed.")
 
 if __name__ == '__main__':
