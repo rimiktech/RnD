@@ -42,8 +42,8 @@ class AirtableManager:
         try:
             airtable = Airtable(self.airtable_base_id, self.airtable_product, api_key=self.airtable_api_key)
             all_url_list = []
-            views=["viwEoQqCqAV7GtUlM","viwOEZRrMox33wBBS","viwsfe0mW93UAEELH"]
-            # views=["viwsfe0mW93UAEELH"]
+            # views=["viwEoQqCqAV7GtUlM","viwOEZRrMox33wBBS","viwsfe0mW93UAEELH"]
+            views=["viwsfe0mW93UAEELH"]
             for view_id in  views:            
                 result = airtable.get_all(view=view_id)  # Use view_id directly
                 url_list = [{'id': record['id'], 'url': record['fields'].get('Source URL')} for record in result if 'Source URL' in record['fields']]
@@ -94,6 +94,7 @@ def view1(url,record_id):
         else:
             log(f"Failed to retrieve the page. Status code: {response.status_code}")
             log(f"Failed to retrieve the page url:{url}")
+            return manager.update_status(record_id, "Error","CASIberia Stock Status")
 
     except Exception as e:
         log(f"Error in views1 {e}")
