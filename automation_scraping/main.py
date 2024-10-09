@@ -11,6 +11,8 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 load_dotenv()
 
 logs_path = "./"
@@ -42,8 +44,8 @@ class AirtableManager:
         try:
             airtable = Airtable(self.airtable_base_id, self.airtable_product, api_key=self.airtable_api_key)
             all_url_list = []
-            # views=["viwEoQqCqAV7GtUlM","viwOEZRrMox33wBBS","viwsfe0mW93UAEELH"]
-            views=["viwsfe0mW93UAEELH"]
+            views=["viwEoQqCqAV7GtUlM","viwOEZRrMox33wBBS","viwsfe0mW93UAEELH"]
+            #views=["viwsfe0mW93UAEELH"]
             for view_id in  views:            
                 result = airtable.get_all(view=view_id)  # Use view_id directly
                 url_list = [{'id': record['id'], 'url': record['fields'].get('Source URL')} for record in result if 'Source URL' in record['fields']]
@@ -151,7 +153,12 @@ def view3(url,record_id):
         # service = ChromeService(executable_path=ChromeDriverManager().install())
         driver = webdriver.Chrome( options=chrome_options)
         driver.get(url)
-    
+        
+        try:
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "bo-inventory-description")))
+        except Exception as e:
+            pass
+
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
         stock_out=soup.find(id="add-to-cart-wrapper")
@@ -196,7 +203,7 @@ def main():
                 if url.startswith("https://www.atlantacutlery.com/"):
                     log("URL starts with https://www.atlantacutlery.com/")
                     view3(url,record_id)
-                elif url.startswith("https://www.museumreplicas.com/"):                
+                elif url.startswith("https://www.museumreplicas.com/") or url.startswith("https://museumreplicas.com/"):                
                     log("URL starts with https://www.museumreplicas.com/")
                     view2(url,record_id)
                 elif url.startswith("https://casiberia.com/"):
