@@ -154,10 +154,21 @@ def view3(url,record_id):
         driver = webdriver.Chrome( options=chrome_options)
         driver.get(url)
         
-        try:
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "bo-inventory-description")))
-        except Exception as e:
-            pass
+        # try:
+        #     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "bo-inventory-description")))
+        # except Exception as e:
+        #     pass
+
+        retries = 3
+        for attempt in range(retries):
+            try:
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "bo-inventory-description"))) 
+                break
+            except Exception as e:
+                if attempt < retries - 1:
+                    time.sleep(1)
+                else:
+                    pass
 
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
