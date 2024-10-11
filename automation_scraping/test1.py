@@ -7,12 +7,12 @@ from datetime import datetime
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service as ChromeService
 load_dotenv()
  
 logs_path = "./"
@@ -30,6 +30,7 @@ def log(message):
     except Exception as err:
         print(err)
  
+ 
 class AirtableManager:
     def __init__(self):
         # Airtable keys
@@ -37,14 +38,14 @@ class AirtableManager:
         self.airtable_base_id = os.getenv("BASE_ID")
         self.airtable_product = os.getenv("TABLE")
          
+     
+ 
     def get_url_list(self):
         try:
             airtable = Airtable(self.airtable_base_id, self.airtable_product, api_key=self.airtable_api_key)
             all_url_list = []
-            views=["viwEoQqCqAV7GtUlM", "viwOEZRrMox33wBBS", "viwsfe0mW93UAEELH"]
-            # views=["viwsfe0mW93UAEELH"]
-            # views=["viwOEZRrMox33wBBS"]
-            # views=["viwEoQqCqAV7GtUlM"]
+            views=["viwEoQqCqAV7GtUlM","viwOEZRrMox33wBBS","viwsfe0mW93UAEELH"]
+            #views=["viwsfe0mW93UAEELH"]
             for view_id in  views:            
                 result = airtable.get_all(view=view_id)  # Use view_id directly
                 url_list = [{'id': record['id'], 'url': record['fields'].get('Source URL')} for record in result if 'Source URL' in record['fields']]
@@ -54,9 +55,11 @@ class AirtableManager:
         except Exception as e:
             log(f"Exception occurred in get_url_list(): {e}")
  
+ 
     def update_status(self, record_id, status,target_column=None):
         try:
             airtable = Airtable(self.airtable_base_id, self.airtable_product, api_key=self.airtable_api_key)
+           
             if record_id and status:
                 update_result = airtable.update(record_id, {target_column: status})
                 log(f"Updated record {record_id} with status: {status}")
@@ -65,6 +68,7 @@ class AirtableManager:
                 log(f"Record id or status not found")
         except Exception as e:
             log(f"Error in update in airtable:{e}")
+ 
  
 def view1(url,record_id):
     try:
@@ -79,101 +83,93 @@ def view1(url,record_id):
                     log(f"Status of Stock:{status_text}")
                     log(f"Record updating for Url:{url}")
                     return manager.update_status(record_id, status_text,"CASIberia Stock Status")
+                 
                 else:
                     stock_status1 = soup.find(id="ctl00_contentBody_pnlDiscontinued")
                     status_text1 = stock_status1.get_text().strip()
                     log(f"Status of Stock:{status_text1}")
                     log(f"Record updating for Url:{url}")
                     return manager.update_status(record_id, status_text1,"CASIberia Stock Status")
+                   
             else:
                 log(f"Element with id 'ctl00_contentBody_lblStockStatus' not found.{url}")
         else:
             log(f"Failed to retrieve the page. Status code: {response.status_code}")
             log(f"Failed to retrieve the page url:{url}")
             return manager.update_status(record_id, "Error","CASIberia Stock Status")
+ 
     except Exception as e:
         log(f"Error in views1 {e}")
  
 def view2(url,record_id):
     try:
         manager=AirtableManager()
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        driver = webdriver.Chrome(options=chrome_options)
-        driver.get(url)
-        retries = 3
-        for attempt in range(retries):
-            try:
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "bo-inventory-description"))) 
-                break
-            except Exception as e:
-                if attempt < retries - 1:
-                    time.sleep(1)
-                else:
-                    pass
-
-        page_source = driver.page_source
-        soup = BeautifulSoup(page_source, 'html.parser')
-        stock_purchage_element = soup.find('div', class_='bo-inventory-description')
-        stock_closeout=soup.find("p", class_="closeout") 
-        stock_soldout=soup.find("div", class_="out-stockWarp")
-        stock_status = soup.find(id="form-action-addToCart")
-
-        if stock_purchage_element:          
-            stock_status_pre = stock_purchage_element.get_text()  
-            log(f"stock status for ATL:{stock_status_pre}")
-            log(f"Record updating for Url:{url}")    
-            return manager.update_status(record_id, stock_status_pre,"Windlass Stock Status")
-        
-        if stock_closeout:
-            stock_closeout_text=stock_closeout.get_text().strip()
-            log(f"Record updating for Url:{url}")
-            return manager.update_status(record_id, stock_closeout_text,"Windlass Stock Status")
-           
-        if stock_soldout:
-            stock_soldout_text=stock_soldout.text
-            log(f"Record updating for Url:{url}")
-            return manager.update_status(record_id, stock_soldout_text,"Windlass Stock Status")
-        
-        if stock_status:
-            status_text = stock_status.text
-            if status_text == "Add to Cart":
-                log(f"Status of Stock:{status_text}")
+        response=requests.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            stock_closeout=soup.find("p", class_="closeout")          
+            if stock_closeout:
+                stock_closeout_text=stock_closeout.get_text().strip()
                 log(f"Record updating for Url:{url}")
-                return manager.update_status(record_id, "in Stock","Windlass Stock Status")
-                
-            else:
-                stock_status_element = soup.find(id="form-action-addToCart")
-                stock_status_text=stock_status_element.get_text()
-                if stock_status_text=="Pre-Order Now":
+                return manager.update_status(record_id, stock_closeout_text,"Windlass Stock Status")
+           
+            stock_soldout=soup.find("div", class_="out-stockWarp")
+           
+            if stock_soldout:
+             
+                stock_soldout_text=stock_soldout.text
+                log(f"Record updating for Url:{url}")
+                return manager.update_status(record_id, stock_soldout_text,"Windlass Stock Status")
+           
+            stock_status = soup.find(id="form-action-addToCart")
+            if stock_status:
+                status_text = stock_status.text
+                if status_text == "Add to Cart":
+                    log(f"Status of Stock:{status_text}")
                     log(f"Record updating for Url:{url}")
-                    return manager.update_status(record_id, "This product is on BackOrder and will be shipped later","Windlass Stock Status")
-                    
+                    return manager.update_status(record_id, "in Stock","Windlass Stock Status")
+                   
                 else:
-                    log(f"Record updating for Url:{url}")
-                    return manager.update_status(record_id, "Out of stock","Windlass Stock Status")
-                    
+                   
+                    stock_status_element = soup.find(id="form-action-addToCart")
+                    stock_status_text=stock_status_element.get_text()
+                    if stock_status_text=="Pre-Order Now":
+                        log(f"Record updating for Url:{url}")
+                        return manager.update_status(record_id, "This product is on BackOrder and will be shipped later","Windlass Stock Status")
+                       
+                    else:
+                        log(f"Record updating for Url:{url}")
+                        return manager.update_status(record_id, "Out of stock","Windlass Stock Status")
+                       
     except Exception as e:
         log(f"Error in occured in view2:{e}")
  
 def view3(url,record_id):
     try:
+     
         manager=AirtableManager()
         chrome_options = Options()
-        chrome_options.add_argument("--headless") 
-        driver = webdriver.Chrome(options=chrome_options)
+        chrome_options.add_argument("--headless")  # Run in headless mode (optional)
+        # service = ChromeService(executable_path=ChromeDriverManager().install())
+        driver = webdriver.Chrome( options=chrome_options)
         driver.get(url)
+       
+        # try:
+        #     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "bo-inventory-description")))
+        # except Exception as e:
+        #     pass
+ 
         retries = 3
         for attempt in range(retries):
             try:
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "bo-inventory-description"))) 
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "bo-inventory-description")))
                 break
             except Exception as e:
                 if attempt < retries - 1:
                     time.sleep(1)
                 else:
                     pass
-
+ 
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
         stock_out=soup.find(id="add-to-cart-wrapper")
@@ -190,6 +186,7 @@ def view3(url,record_id):
    
         stock_status = soup.find(id="form-action-addToCart")
         if stock_status:
+           
             status_text = stock_status.get("value")        
             if status_text == "Add to Cart":
                 log(f"Record updating for Url:{url}")
@@ -207,6 +204,7 @@ def view3(url,record_id):
  
 def main():
     try:
+     
         manager = AirtableManager()
         url_list = manager.get_url_list()
         if url_list:
